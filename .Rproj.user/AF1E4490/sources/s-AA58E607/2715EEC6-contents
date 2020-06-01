@@ -1,0 +1,7 @@
+install.packages("rjson")
+install.packages("devtools")
+install.packages("plotly")
+install.packages("factoextra")
+install.packages("tibble")
+library(devtools)
+install_github('vqv/ggbiplot')

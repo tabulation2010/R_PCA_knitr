@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1590904378819.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "A6DE7C79",
+    "lastKnownWriteTime" : 1590904375,
+    "last_content_update" : 1590904375,
+    "path" : "~/Project/Shiny_PCA/app.R",
+    "project_path" : "app.R",
+    "properties" : {
+        "cursorPosition" : "11,34",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
