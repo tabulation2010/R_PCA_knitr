@@ -9,6 +9,10 @@ params:
     label: "Path to JSON file"
     value: "./Data/data_norm.json"
     input: file
+  target:
+    label: "Name of group variable"
+    value: "group"
+    input: text
 ---
 
 
@@ -22,7 +26,7 @@ knitr::opts_chunk$set(echo = params$printcode)
 library("jsonlite")
 library("ggbiplot")
 library("factoextra")
-library(plotly)
+library("plotly")
 
 # Load data
 print(params$path)
@@ -31,7 +35,8 @@ input_df <- json_data$data
 
 # Separate predictor name list and target
 predictor_list <- json_data$nameList
-target <- setdiff(names(input_df), predictor_list)
+# target <- setdiff(names(input_df), predictor_list)
+target <- params$target
 
 # apply PCA (Assume no missing values!!!)
 input_df.pca <- prcomp(input_df[, predictor_list],
@@ -86,7 +91,7 @@ p
 
 ```{r, fig.dim=c(8, 6)}
 # Cumulative variance
-p <- ggplot(data=eig.val, aes(x=as.numeric(as.factor(row.names(eig.val))), y=cumulative.variance.percent), group=1) +
+p <- ggplot(data=eig.val, aes(x=as.numeric(gsub("^.*\\.","",row.names(eig.val))), y=cumulative.variance.percent), group=1) +
   geom_line(color="red")+
   geom_point()+
   geom_text(aes(label=sprintf("%0.2f%%", round(cumulative.variance.percent, digits = 2))),hjust=0.5, vjust=-0.5) +
@@ -114,7 +119,7 @@ ggplotly()
 
 # Extract results
 projected_df <- as.data.frame(input_df.pca$x)
-projected_df['group'] <- input_df$group
+projected_df[target] <- input_df[[target]]
 
 ```
 
@@ -132,19 +137,19 @@ DT::datatable(projected_df)
 ```
 
 ### Visualization of Projected Records
-```{r}
+```{r, fig.align='center'}
 if (dim(input_df.pca$rotation)[2] > 3) {
   # Scale factor for loadings
   scale.loads <- 5
   
   # 3D plot
-  p <- plot_ly(projected_df,
+  p <- plot_ly(data = projected_df,
                x =  ~ PC1,
                y =  ~ PC2,
                z =  ~ PC3) %>%
     add_trace(type = "scatter3d",
               mode = "markers",
-              color =  ~ group)
+              color = projected_df[[target]])
   
   for (k in 1:nrow(input_df.pca$rotation)) {
     x <- c(0, input_df.pca$rotation[k, 1]) * scale.loads
@@ -161,29 +166,29 @@ if (dim(input_df.pca$rotation)[2] > 3) {
       opacity = 1
     )
   }
-  p <- plotly_build(p)
-  symbol_list = c(
-    'circle',
-    'square',
-    'diamond',
-    'cross',
-    'x',
-    'triangle',
-    'pentagon',
-    'hexagram',
-    'star',
-    'diamond',
-    'hourglass',
-    'bowtie',
-    'asterisk',
-    'hash',
-    'y',
-    'line'
-  )
-  
-  for (k in 1:nrow(input_df.pca$rotation)) {
-    p$x$data[[k]]$marker$symbol <- symbol_list[k]
-  }
+  # p <- plotly_build(p)
+  # symbol_list = c(
+  #   'circle',
+  #   'square',
+  #   'diamond',
+  #   'cross',
+  #   'x',
+  #   'triangle',
+  #   'pentagon',
+  #   'hexagram',
+  #   'star',
+  #   'diamond',
+  #   'hourglass',
+  #   'bowtie',
+  #   'asterisk',
+  #   'hash',
+  #   'y',
+  #   'line'
+  # )
+  # 
+  # for (k in 1:min(nrow(input_df.pca$rotation), length(symbol_list))) {
+  #   p$x$data[[k]]$marker$symbol <- symbol_list[k]
+  # }
   p
 }
 ```
