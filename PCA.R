@@ -1,16 +1,25 @@
 # PCA analysis on sample JSON data
 
 ## Initialization
+rm(list=ls())
 library("jsonlite")
 library("ggbiplot")
 library("factoextra")
+library("plotly")
+library("xlsx")
 
+options(warn=-1)
 # Load data
 json_data <- fromJSON(txt = "./Data/data_norm.json")
 
 input_df <- json_data$data
+
 predictor_list <- json_data$nameList
-target <- setdiff(names(input_df), predictor_list)
+
+# Optional (Normalize and scale data)
+# input <- scale(input_df[predictor_list], center = TRUE, scale = TRUE)
+
+target <- 'group'
 
 # apply PCA (Assume no missing values!!!)
 input_df.pca <- prcomp(input_df[, predictor_list],
@@ -52,6 +61,8 @@ p <- fviz_eig(
 
 print(p)
 
+names(input_df.pca$sdev) <- paste0("PC", 1:length(input_df.pca$sdev))
+barplot(input_df.pca$sdev^2)
 # Cumulative variance
 plot(
   eig.val$cumulative.variance.percent,
@@ -76,3 +87,37 @@ ggbiplot(
 # Extract results
 loading_mat <- input_df.pca$rotation
 projected_df <- input_df.pca$x
+
+# Score plot
+f <- list(
+  family = "Courier New, monospace",
+  size = 18,
+  color = "#7f7f7f"
+)
+x <- list(
+  title = "ID",
+  titlefont = f
+)
+y <- list(
+  title = "Score",
+  titlefont = f
+)
+p <- plot_ly(data=as.data.frame(projected_df),
+  x = as.integer(row.names(projected_df)),
+  y = ~PC1,
+  name = "",
+  type = "bar"
+) %>% layout(xaxis = x, yaxis = y)
+p
+
+# Loading plot
+plot(input_df.pca$rotation[,1:2])
+# Add vertical and horizontal lines at c(0,0)
+abline(h =0, v = 0, lty = 2)
+
+# Output to CSV
+write.csv(projected_df, file = './PCA_projection.csv', row.names = FALSE)
+
+# Output to Excel
+write.xlsx(projected_df, file = './PCA_projection.xlsx', sheetName = "Sheet1", 
+           col.names = TRUE, row.names = TRUE, append = FALSE)

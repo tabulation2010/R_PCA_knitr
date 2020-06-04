@@ -1,0 +1,227 @@
+---
+title: Hierarchical Clustering Analysis Report
+output: html_document
+params:
+  printcode:
+    label: "Display Code"
+    value: FALSE
+  path:
+    label: "Path to JSON file"
+    value: "./Data/1586432047625.json"
+    input: file
+  target:
+    label: "Name of group variable"
+    value: "group"
+    input: text
+  n_cluster:
+    label: "Number of clusters"
+    value: 3
+    input: numeric
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = params$printcode)
+```
+
+
+```{r, include=FALSE}
+## Initialization
+library('cluster')
+library('factoextra')
+library('dendextend')
+library("plotly")
+library("ggplot2")
+library("circlize")
+library("corrplot")
+library("jsonlite")
+
+# Load data
+json_data <- fromJSON(txt = params$path)
+
+input_df <- json_data$data
+predictor_list <- json_data$nameList
+target <- params$target
+n_cluster <- params$n_cluster
+
+# Assume data is scaled and normalized. Otherwise run the following command
+
+## Agglomerative Hierarchical Clustering
+
+# methods to assess
+m <-
+  c("average", "single", "complete", "ward", "weighted", "gaverage")
+names(m) <-
+  c("average", "single", "complete", "ward", "weighted", "gaverage")
+
+# function to compute agglomerative coefficient
+ac_calc <- function(x) {
+  agnes(input_df[predictor_list], method = x)$ac
+}
+
+dend_calc <- function(x) {
+  agnes(input_df[predictor_list], method = x) %>%
+    as.dendrogram %>%
+    set("branches_k_color", k = 3) %>%
+    set("branches_lwd", c(2, 1, 1)) %>%
+    set("branches_lty", c(1, 1, 3, 1, 1, 2)) %>%
+    set("labels_colors") %>%
+    set("labels_cex", c(.6, 1.5)) %>%
+    set("nodes_pch", 19) %>%
+    set("nodes_col", c("orange", "black", "plum", NA))
+}
+
+ac_list <- sapply(m, ac_calc)
+
+opt_method <- names(which.max(ac_list))
+
+
+
+```
+
+
+## Results {.tabset}
+
+### Agglomerative Hierarchical Clustering (AHC) {.tabset}
+
+#### Overview
+Agglomerative coefficient: 
+
+```{r, fig.dim=c(8, 6), fig.align="center"}
+ac_list
+```
+
+The optimal clustering method for this dataset is ``r opt_method``. The next tabs are focusing on this method.
+
+#### Dendrogram
+```{r, fig.dim=c(8, 6), fig.align="center"}
+hc <- agnes(input_df[predictor_list], method = opt_method)
+
+dend <- hc %>%
+  as.dendrogram %>%
+  set("branches_k_color", k = n_cluster) %>%
+  set("branches_lwd", c(1.2, 0.8, 0.5)) %>%
+  set("branches_lty", c(1, 1, 3, 1, 1, 1)) %>%
+  set("labels_colors") %>%
+  set("labels_cex", c(.6, 1.5)) %>%
+  set("nodes_pch", 19) %>%
+  set("nodes_col", c("orange", "black", "plum", NA))
+
+# Plot the dendrogram of the optimal hc method
+ggd1 <- as.ggdend(dend)
+p <- ggplot(ggd1) +
+  labs(title = paste0(
+    "Dendrogram of Agglomerative Hierarchical Clustering with ",
+    opt_method
+  )) +
+  theme(plot.title = element_text(hjust = 0.5))
+p <- ggplotly(p)
+
+for (i in 1:length(p$x$data)) {
+  p$x$data[[i]]$text <- c(p$x$data[[i]]$text, "")
+  p$x$data[[i]]$showlegend <- FALSE
+}
+p
+```
+
+#### Radial Dendrogram
+```{r, fig.dim=c(8, 6), fig.align="center"}
+# Create a radial plot and remove labels
+circlize_dendrogram(dend)
+
+```
+
+#### Cluster Plot
+Count of records in each of the ``r params$n_cluster`` cluster
+```{r, fig.dim=c(8, 6), fig.align="center"}
+# Cut tree into 3 groups
+sub_grp <- cutree(hc, k = n_cluster)
+
+# Number of members in each cluster
+table(sub_grp)
+
+p <-
+  fviz_cluster(list(data = input_df[predictor_list], cluster = sub_grp), ellipse.type = "norm") +
+  labs(title = paste0(
+    "Cluster plot of Agglomerative Hierarchical Clustering with ",
+    opt_method
+  )) +
+  theme(plot.title = element_text(hjust = 0.5))
+p
+```
+
+#### Correlation
+
+```{r, fig.dim=c(10, 6), fig.align="center"}
+
+full_dend_list <- as.dendlist(lapply(m, dend_calc))
+names(full_dend_list) <- m
+corrplot(cor.dendlist(full_dend_list), "pie", "lower")
+```
+
+### Divisive Hierarchical Clustering (DHC)
+```{r, fig.dim=c(8, 6), fig.align="center"}
+
+# compute divisive hierarchical clustering
+hc_div <- diana(input_df[predictor_list])
+```
+
+
+Divise coefficient (the amount of clustering structure found) is: ``r hc_div$dc``
+
+```{r, fig.dim=c(8, 6), fig.align="center"}
+
+# plot dendrogram
+dend_diana <- hc_div %>%
+  as.dendrogram %>%
+  set("branches_k_color", k = n_cluster) %>%
+  set("branches_lwd", c(1.2, 0.8, 0.5)) %>%
+  set("branches_lty", c(1, 1, 3, 1, 1, 1)) %>%
+  set("labels_colors") %>%
+  set("labels_cex", c(.6, 1.5)) %>%
+  set("nodes_pch", 19) %>%
+  set("nodes_col", c("orange", "black", "plum", NA))
+
+# Plot the dendrogram of the optimal hc method
+ggd1 <- as.ggdend(dend_diana)
+p <- ggplot(ggd1) +
+  labs(title = "Dendrogram of Divisive Hierarchical Clustering") +
+  theme(plot.title = element_text(hjust = 0.5))
+p <- ggplotly(p)
+
+for (i in 1:length(p$x$data)) {
+  p$x$data[[i]]$text <- c(p$x$data[[i]]$text, "")
+  p$x$data[[i]]$showlegend <- FALSE
+}
+p
+
+```
+
+
+### Comparison AHC v.s. DHC  {.tabset}
+
+#### Tanglegram
+```{r, fig.dim=c(10, 6), fig.align="center"}
+
+## Compare 2 dendrograms
+hc_1 <- agnes(input_df[predictor_list], method = 'gaverage')
+
+dend_list <- dendlist(dend, dend_diana)
+
+tanglegram(
+  dend,
+  dend_diana,
+  highlight_distinct_edges = FALSE,
+  # Turn-off dashed lines
+  common_subtrees_color_lines = FALSE,
+  # Turn-off line colors
+  main = paste(
+    "Entanglement (",
+    opt_method,
+    " v.s. divisive)",
+    " =",
+    round(entanglement(dend_list), 2)
+  )
+)
+
+```
