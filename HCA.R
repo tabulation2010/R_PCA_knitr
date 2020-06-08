@@ -168,7 +168,9 @@ Colv  <- input_df[predictor_list] %>% t %>% dist %>% hclust(method="complete") %
   set("branches_k_color", k = 3) %>% set("branches_lwd", 1) %>%
   ladderize
 
-heatmaply(input_df[predictor_list], Rowv = Rowv, Colv = Colv)
+p <- heatmaply(input_df[predictor_list], Rowv = Rowv, Colv = Colv)
+p
+htmlwidgets::saveWidget(as.widget(p), "HCA2.html", selfcontained = FALSE)
 
 heatmap.2(as.matrix(input_df[predictor_list]), Rowv = Rowv, Colv = Colv)
 
