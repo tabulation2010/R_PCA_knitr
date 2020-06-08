@@ -7,7 +7,7 @@ library("mixOmics")
 library("plotly")
 
 # Load data
-json_data <- fromJSON(txt = "./Data/data_norm.json")
+json_data <- fromJSON(txt = "./Data/1589353276563.json")
 
 input_df <- json_data$data
 predictor_list <- json_data$nameList
@@ -20,10 +20,10 @@ input_df[[target]] <- as.factor(input_df[[target]])
 plsda.model <-
   splsda(input_df[predictor_list], input_df[[target]], ncomp = 3)
 
-auroc(plsda.model)
+# auroc(plsda.model)
 
 
-plotLoadings(plsda.model, contrib = 'max', method = 'mean', comp = 2)
+# plotLoadings(plsda.model, contrib = 'max', method = 'mean', comp = 2)
 
 plotIndiv(
   plsda.model,
@@ -88,8 +88,14 @@ if (dim(plsda.model$variates$X)[2] >= 3) {
     z =  ~ comp3
   ) %>%
     add_trace(type = "scatter3d",
+              opacity = 0.6,
               mode = "markers",
-              color = input_df[[target]]) %>%
+              color = input_df[[target]],
+              marker = list(
+                line = list(
+                  width = 1
+                )
+              )) %>%
     layout(title = "PLSDA projection")
   p
 }
@@ -115,6 +121,7 @@ loading <- as.data.frame(rbind(plsda.model$loadings$X, plsda.model$loadings$Y))
 loading['sep'] <- 'Y'
 loading$sep[1:nrow(plsda.model$loadings$X)] <- "X"
 
+# Loading Plot
 p <- ggplot(loading, 
             aes_string(x = 'comp1', y='comp2', 
                        group = 'sep')) +
@@ -130,8 +137,11 @@ p <- ggplot(loading,
 
 ggplotly(p)
 
+
 plsda.model$loadings
 
+
+# VIP
 library("ropls")
 
 json.plsda <- opls(input_df[predictor_list], input_df[[target]], predI=3, fig.pdfC=F)
