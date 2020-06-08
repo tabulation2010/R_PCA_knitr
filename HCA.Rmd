@@ -7,7 +7,7 @@ params:
     value: FALSE
   path:
     label: "Path to JSON file"
-    value: "./Data/1586432047625.json"
+    value: "./Data/data_norm.json"
     input: file
   target:
     label: "Name of group variable"
