@@ -34,6 +34,8 @@ plotIndiv(
   # star = TRUE,
   X.label = 'PLS-DA 1',
   Y.label = 'PLS-DA 2',
+  centroid = TRUE,
+  # rep.space = "XY-variate",
   title = 'PLSDA Sample Plot (t1 v.s. t2)'
 )
 
@@ -47,6 +49,7 @@ plotIndiv(
   group = input_df[[target]],
   ellipse = TRUE,
   legend = TRUE,
+  centroid = TRUE,
   title = 'PLSDA Sample Plot (t2 v.s. t3)'
 )
 
@@ -56,6 +59,7 @@ plotIndiv(
   group = input_df[[target]],
   ellipse = TRUE,
   legend = TRUE,
+  centroid = TRUE,
   title = 'PLSDA Sample Plot (t1 v.s. t3)'
 )
 
@@ -69,8 +73,8 @@ plsda_vali_loo$class$max.dist[, , 2]
 plot(plsda_vali_loo)
 
 pred <-
-  cbind(Actual = as.character(input_df[[target]]),
-        Prediction = plsda_vali_loo$class$max.dist[, , 3])
+  as.data.frame(cbind(Actual = as.character(input_df[[target]]),
+                      Prediction = plsda_vali_loo$class$max.dist[, , 3]))
 print(pred)
 cat("LOO CV Accurary:\n")
 print(paste0(round(mean(pred[, 'Actual'] == pred[, 'Prediction']) * 100, 2), "%"))

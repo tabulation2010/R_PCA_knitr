@@ -14,6 +14,8 @@ install.packages("jsonlite")
 install.packages("BiocManager")
 install.packages("haven")
 install.packages("xlsx")
+install.packages("DiscriMiner")
+install.packages("candisc")
 
 devtools::install_github('vqv/ggbiplot')
 devtools::install_github("mixOmicsTeam/mixOmics", force = T)

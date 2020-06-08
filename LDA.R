@@ -6,6 +6,9 @@ library("jsonlite")
 library("MASS")
 library("caret")  # Optional if too big
 library("plotly")
+library("DiscriMiner")
+library("candisc")
+
 options(warn = -1)
 # Load data
 json_data <- fromJSON(txt = "./Data/data_norm.json")
@@ -43,6 +46,7 @@ print(lda_model)
 
 print('Coefficients of linear discriminants')
 print(lda_model$scaling)
+print(lda_model$means)
 plot(lda_model, dimen=3)
 pairs(lda_model, dimen = 2)
 # for 1st discriminant function
@@ -52,13 +56,17 @@ plot(lda_model, dimen=1, type="both") # fit from lda
 output = as.data.frame(predict(lda_model, input_df[predictor_list])$x)
 output[[target]] = input_df[[target]]
 
-p <- ggplot(output, 
-       aes_string(x = 'LD1', y='LD2', 
-           group = target)) +
-  geom_point(size = 3,
-             alpha = .5, 
-             aes_string(color = target,
-             shape = target)) +
+centroids <- lda_model$means %*% lda_model$scaling
+p <- ggplot() +
+  geom_point(output, 
+             mapping = aes_string(x = 'LD1', y='LD2', 
+                                  group = target, 
+                                  color = target,
+                                  shape = target),size = 3,
+             alpha = .5
+             ) + 
+  geom_point(data = as.data.frame(centroids),
+             mapping = aes_string(x = 'LD1', y = 'LD2'), color="blue",size=5,alpha=.3)
   labs(title = "Typical Differentiation Function",
        x = "LD1",
        y = "LD2") +
@@ -66,3 +74,7 @@ p <- ggplot(output,
   theme(plot.title = element_text(hjust = 0.5))
 
 ggplotly(p)
+
+lda_model <- linDA(input_df[predictor_list], input_df[[target]])
+summary(lda_model)
+print(lda_model$functions)
