@@ -39,7 +39,7 @@ prop.table(confmat_cv$table, margin = 1)
 
 ## Or simply
 table(lda_cv$class, input_df[[target]])
-prop.table(table(lda_cv$class, input_df[[target]]))
+prop.table(table(lda_cv$class, input_df[[target]]), margin = 1)
 ## Modeling with LDA
 lda_model <- lda(f, data = input_df[, c(predictor_list, target)])
 print(lda_model)

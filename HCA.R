@@ -86,6 +86,22 @@ p
 # Create a radial plot and remove labels
 circlize_dendrogram(dend)
 
+circos.initialize("foo", xlim = c(0, 40))
+circos.track(ylim = c(0, 1), panel.fun = function(x, y) {
+  circos.rect(1:40 - 0.8, rep(0, 40), 1:40 - 0.2, runif(40), col = rand_color(40), border = NA)
+}, bg.border = NA)
+circos.track(ylim = c(0, 1), panel.fun = function(x, y) {
+  circos.text(1:40 - 0.5, rep(0, 40), labels(dend),
+              col = labels_colors(dend),
+              facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5)
+  )
+}, bg.border = NA, track.height = 0.1)
+max_height <- attr(dend, "height")
+circos.track(ylim = c(0, max_height), panel.fun = function(x, y) {
+  circos.dendrogram(dend, max_height = max_height)
+}, track.height = 0.5, bg.border = NA)
+circos.clear()
+
 
 # Cut tree into 3 groups
 sub_grp <- cutree(hc, k = n_cluster)
